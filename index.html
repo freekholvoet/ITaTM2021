@@ -378,9 +378,12 @@ GLM's allow the include .hi-pink[non-normal] errors, such as binomial, Poisson, 
 
 This transformation (called .hi-pink[link function]) together with the .hi-pink[distribution] of the errors needs to be tuned. 
 
+
 ---
 
 # Machine learning techniques in our case study
+
+### Machine learning models
 
 The GLM can be replaced with a more 'machine learning' approach. 
 
@@ -390,20 +393,20 @@ We will look at both .hi-pink[Gradient Boosing] and .hi-pink[Neural Networks]. W
 
 &lt;br&gt;
 &lt;br&gt;
-&lt;br&gt;
-&lt;br&gt;
+
+Some references for your information
 
 - Binned GLM:  [Henckaerts et al. (2018)](#references) uses GAMs together with tree-based clustering, to bin continuous variables for use in a GLM
 
 - Gradient Boosting:  [Henckaerts et al. (2020)](#references) uses GBMs for both frequency and severity modelling
 
-- Neural Networks and CANNs: [Holvoet et al. (working paper)] uses Neural networks and CANN models, in both fixed and flexible setup
+- Neural Networks and CANNs: [Holvoet et al. (working paper)](#references) uses Neural networks and CANN models, in both fixed and flexible setup
 
 ---
 
 # Machine learning techniques in our case study
 
-### Preperation
+### Preparation
 
 What to do with categorical variables? 
 
@@ -464,6 +467,24 @@ Variable .hi-pink[Coverage] contains values TPL, TPL+ and TPL+++. A model cannot
 .center[
 &lt;img src="./img_f/embedding_cropped.png" width="60%" height="40%" style="display: block; margin: auto;" /&gt;
 ]
+
+---
+
+# Machine learning techniques in our case study
+
+### Loss Functions
+
+##### Frequency problem
+
+`\begin{equation}
+D_{poisson}(y, f(\mathbf{x})) = 2 \sum_{i=1}^{n}\left( y_i\ln\frac{y_i}{f(\mathbf{x}_i)}-(y_i-f(\mathbf{x}_i)) \right)
+\end{equation}`
+
+##### Severity problem
+
+`\begin{equation}
+D_{gamma}(y, f(\mathbf{x})) = 2 \sum_{i=1}^{n} \alpha \left( \frac{y_i-f(\mathbf{x}_i)}{f(\mathbf{x}_i)}-\ln\frac{y_i}{f(\mathbf{x}_i)} \right)
+\end{equation}`
 
 ---
 
@@ -530,12 +551,19 @@ We tune parameter by parameter
 .pull-left[Problem: takes a very long time]
 .pull-right[Problem: it is much faster, but we might miss something]
 
+--
+
+.pull-right[.hi-pink[We choose this!]]
+
 ---
 
 # Machine learning techniques in our case study
 
 ### Gradient Boosting Model
 
+.center[
+&lt;img src="./img_f/gradientboosting_v2.png" width="80%" height="50%" style="display: block; margin: auto;" /&gt;
+]
 
 ---
 
@@ -544,12 +572,8 @@ We tune parameter by parameter
 ### Tuning parameters in this case
 
 ##### Gradient Boosting Model
-- dropout rate
-- batch size
-- Number of layers
-- Number of nodes in each layer
-- Activation functions for each layer
-- Optimizer algorithm
+- Number of trees
+- Maximum depth of each tree
 
 ---
 
@@ -562,10 +586,6 @@ Fully-connected feed-forward neural networks
 .center[
 &lt;embed src="./img_f/NN_animation.gif" width="60%"&gt;
 ]
-
-Each layer outputs a weighted combination of the previous layer, with an activation function `\(\sigma\)`:
-
-`$$\boldsymbol{\text{layer}_i} = \sigma(\mathbf{W}\,\boldsymbol{\text{layer}_{i-1}} + \boldsymbol{\beta})$$`
 
 ---
 
@@ -581,6 +601,7 @@ Combined Actuarial Neural Networks (.hi-pink[CANN]), proposed by [Scheldorfer an
 
 An .hi-pink[initial model] is added with a skip connection to the output layer. The neural network part is called the .hi-pink[adjustment model].
 
+We will look at two different initial models; a GLM and a GBM
 ---
 
 # Machine learning techniques in our case study
@@ -634,62 +655,28 @@ In a model `\(f(\boldsymbol{x})\)` with perfect balance:
 $$ \sum_i f(\boldsymbol{x}_i) = \sum_i y_i. $$
 .KULbginline[Important in insurance:] premiums are defined on portfolio level
 
+--
+
 ### GLM bias regularization
 
 A technique, proposed by [Wutrich (2020)](#references), to restore balance in the model
 
----
-
-# Model interpretation techniques
-
-fff
+We are not going into detail here, just know this:
+- The balance property is important in insurance
+- There are ways to restore balance when needed
 
 ---
 
-# Model interpretation techniques
+name: outofsample
 
-### Why we need interpretation
+# Out-of-sample performance
+### GLM and GBM results
 
-fff
-
----
-
-# Model interpretation techniques
-
-### Variable importance plots
-
-fff
- 
----
-
-# Model interpretation techniques
-
-### Partial dependency plots
-
-fff
-
----
-
-# Results
-
-Let's look at some results!
-
-.pull-left[
-###Models
-- GLM
-- Gradient Boosing
-- Neural Networks
-- CANN models
+.center[
+&lt;img src="./img_f/glm_etc.png" width="100%" height="50%" style="display: block; margin: auto;" /&gt;
 ]
 
-.pull-right[
-### Furthers splits
-- Both frequency and severity setup
-- one-hot encoding vs embedding layers
-- Different input models for CANN models
-- (exposure as offset)
-- (GLM bias regularization)
-]
+Tree = decision tree; Rf = random forest; GBM = gradient boosting model; GAM = generalized additive model; GLM = generalized linear model
 
 ---
 
@@ -699,7 +686,7 @@ name: outofsample
 ### Neural network results
 
 .center[
-&lt;img src="./img_f/OOS_NN_freq_vs_sev.png" width="80%" height="50%" style="display: block; margin: auto;" /&gt;
+&lt;img src="./img_f/OOS_NN_freq_vs_sev_Crop.png" width="90%" height="50%" style="display: block; margin: auto;" /&gt;
 ]
 
 ---
@@ -708,7 +695,7 @@ name: outofsample
 ### CANN model results
 
 .center[
-&lt;img src="./img_f/OOS_CANN_freq_vs_sev.png" width="80%" height="50%" style="display: block; margin: auto;" /&gt;
+&lt;img src="./img_f/OOS_CANN_freq_vs_sev_Crop.png" width="90%" height="50%" style="display: block; margin: auto;" /&gt;
 ]
 
 ---
@@ -716,7 +703,7 @@ name: outofsample
 name: brresults
 
 # Out-of-sample performance
-### Effect of bias regularization
+### Restoring the balance property
 
 .center[
 &lt;img src="./img_f/BReffect_Freq_CANNs.png" width="60%" height="50%" style="display: block; margin: auto;" /&gt;
@@ -726,46 +713,82 @@ name: brresults
 
 name: interpretation
 
-# Model interpretational tools
+# Model interpretation techniques
 
-.pull-left[
-### Variable importance plot
+### Why we need interpretation
 
-- Permutate each variable `\(\ell\)` 
+Insurance is one of the most regulated business. 
 
-- Calculate the difference in prediction between the unpermutated and the permutated sample data set 
+- Internal model validation
+- Internal auditors
+- External auditors
+- National Bank of Belgium
+- EIPOA = European Insurance and Occupational Pension Authority
+
+A .hi-pink[black box] type model will give a lot of problems, because you cannot explain why the model predicts something
+
+Enhanced by the GDPR act of 2016 with its .hi-pink[algorithmic accountability] and the .hi-pink[right to explanation]
+
+---
+
+# Model interpretation techniques
+
+### Variable importance plots
+
+- Permutate a variable `\(\ell\)`, meaning; randomly change all the variables around
+
+- See how much the predictions change
+
+- The more difference in prediction, the more important that variable is
+
+Is a very important measure! Learns us something about all different variables, for example, is gender really important in number of car accidents or not? 
 
 &lt;br&gt;
 
 `$$\text{VIP}_{\ell} = \frac{1}{n}\sum_{i=1}^{n}\left( f_{\text{model}}(\boldsymbol{x}_i) - f_{\text{model}}\left(\boldsymbol{x}_i^{\text{perm},\ell}\right) \right)$$`
 
-]
+.footnote[Reference: [Molnar (2019)](#references)]
+ 
+---
 
-.pull-right[
-### Partial dependence plot
+# Model interpretation techniques
 
-- Fix the value of variable `\(\ell\)` 
+### Partial dependency plots
+
+- For a variable `\(\ell\)`, put all data points to the same value (for example; variable age, make everyone 20 years old) 
 
 - Look at the average prediction
 
 - Calculate the average predictions over the full range of possible values
 
-`$$\text{PDP}(x_{\ell}) = \frac{1}{n}\sum_{i=1}^{n}f_{\text{model}}(\boldsymbol{x}_{\ell},\boldsymbol{x}^*_i)$$`
+Shows us how the prediction changes over the values of a variable! For example, are older people worse drivers or not?
 
-]
+`$$\text{PDP}(x_{\ell}) = \frac{1}{n}\sum_{i=1}^{n}f_{\text{model}}(\boldsymbol{x}_{\ell},\boldsymbol{x}^*_i)$$`
 
 .footnote[Reference: [Molnar (2019)](#references)]
 
 ---
 
-# Model interpretational tools
+# Model interpretational results
 
 ### Variable importance plot
 
 A permutational approach to asses the importance of each variable in the claim frequency model.
 
 .center[
-&lt;img src="./img_f/VIP_Freq.png" width="80%" height="50%" style="display: block; margin: auto;" /&gt;
+&lt;img src="./img_f/VIP_glm_etc_v2.png" width="65%" height="50%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+# Model interpretational results
+
+### Variable importance plot
+
+A permutational approach to asses the importance of each variable in the claim frequency model.
+
+.center[
+&lt;img src="./img_f/VIP_Freq.png" width="100%" height="50%" style="display: block; margin: auto;" /&gt;
 ]
 
 ---
@@ -777,7 +800,19 @@ A permutational approach to asses the importance of each variable in the claim f
 Effect of the policyholder age on the predicted claim severity.
 
 .center[
-&lt;img src="./img_f/PDP_Freq_ageph.png" width="80%" height="50%" style="display: block; margin: auto;" /&gt;
+&lt;img src="./img_f/PDP_glm_ageph_v2.png" width="80%" height="50%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+# Model interpretational tools
+
+### Partial dependence plot: Policyholder age
+
+Effect of the policyholder age on the predicted claim severity.
+
+.center[
+&lt;img src="./img_f/PDP_NC_ageph_comparison.png" width="100%" height="50%" style="display: block; margin: auto;" /&gt;
 ]
 
 ---
@@ -789,7 +824,7 @@ Effect of the policyholder age on the predicted claim severity.
 Effect of the postal code on the predicted number of claims.
 
 .center[
-&lt;img src="./img_f/PDP_NC_spatial_comparison.png" width="80%" height="50%" style="display: block; margin: auto;" /&gt;
+&lt;img src="./img_f/PDP_NC_spatial_comparison.png" width="100%" height="50%" style="display: block; margin: auto;" /&gt;
 ]
 
 ---
@@ -816,13 +851,14 @@ Jurg Schelldorfer and Mario V. Wuthrich. Nesting Classical Actuarial Models into
 Mario V. Wuthrich. Bias regularization in neural network models for general insurance pricing. &lt;i&gt;European
 Actuarial Journal&lt;/i&gt;, 10(1):179–202, 2020.]
 
+.font90[
+Freek Holvoet, Katrien Antonio, Roel Henckaerts, and Simon Gielis. Neural network-based models for non-life insurance pricing. &lt;i&gt; Working paper&lt;/i&gt;, 2021.]
+
 &lt;br&gt;
 &lt;br&gt;
 &lt;br&gt;
 
 Slides created with the R package &lt;img src="img/xaringan.png" class="title-hex"&gt; [xaringan](https://github.com/yihui/xaringan).&lt;br&gt;
-Presentation template from <svg aria-hidden="true" role="img" viewBox="0 0 496 512" style="height:1em;width:0.97em;vertical-align:-0.125em;margin-left:auto;margin-right:auto;font-size:inherit;fill:#116E8A;overflow:visible;position:relative;"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg> https://github.com/katrienantonio/hands-on-machine-learning-R-module-1
-
 
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
