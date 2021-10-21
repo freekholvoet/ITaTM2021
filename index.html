@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Machine Learning Applications in Insurance</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Freek Holvoet" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <link href="libs/remark-css/default.css" rel="stylesheet" />
+    <link rel="stylesheet" href="css/metropolis.css" type="text/css" />
+    <link rel="stylesheet" href="css/metropolis-fonts.css" type="text/css" />
+    <link rel="stylesheet" href="css/my-css.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+
+
+
+
+
+
+class: bottom, left, title-slide, clear
+
+background-image: url('img_f/beamer_title_KUL.png')
+background-size: contain
+
+name: titlepage
+
+# Machine Learning Applications in Insurance
+
+&lt;img src="img_f/tm_logo.png" class="topright_image"/&gt;
+
+&lt;html&gt;&lt;div style='float:left'&gt;&lt;/div&gt;&lt;hr color='#FAFAFA' size=1px width=100%&gt;&lt;/html&gt;
+
+&lt;span style="color:#FAFAFA;font-size:18.0pt"&gt;
+Freek Holvoet &lt;br&gt;
+22 October 2021 &lt;br&gt;
+&lt;/span&gt;
+
+&lt;span style="color:#FAFAFA;font-size:14.0pt"&gt;
+Course: AI Applications&lt;br&gt;
+Lecturer: Dr. ir. Lynn Houthuys &lt;br&gt;
+&lt;/span&gt;
+---
+
+name: whoami
+# Who am I?
+
+.pull-left-big[
+### About myself
+Name: .KULbginline[Freek Holvoet]
+
+Occupation: .KULbginline[Actuary]
+
+- 2014-2015: Risk Modelling Trainnee @ Delta Lloyd Life
+- 2015-2017: Risk Modelling Expert @ Delta Lloyd Life
+- 2017-2021: Risk Modelling Expert @ NN Insurance Belgium
+- 2021-...: Phd Researcher @ [LRisk KU Leuven](https://feb.kuleuven.be/drc/LRisk)
+
+### What is an actuary?
+In short: .hi-pink[an insurance mathematician]. An actuary does pricing, reserving, cash flow modelling, reporting,... 
+]
+.pull-right-small[
+
+&lt;br&gt;
+
+&lt;img src="img_f/deltalloyd.png" alt="Delta Lloyd Life Logo" width="80%"&gt;
+
+&lt;br&gt;
+
+&lt;img src="img_f/nninsurance.png" alt="Delta Lloyd Life Logo" width="80%"&gt;
+
+&lt;br&gt;
+
+&lt;img src="img_f/LRISK3.png" alt="Delta Lloyd Life Logo" width="80%"&gt;
+
+]
+
+---
+
+name: overview
+# Overview
+
+### What will we see today?
+.pull-left[
+&lt;ul&gt;
+  &lt;li&gt; Different types of insurances &lt;/li&gt;
+  &lt;li&gt; Different applications for machine learning &lt;/li&gt;
+  &lt;li&gt; Case study into MTPL Insurance &lt;/li&gt;
+  &lt;ul&gt;
+    &lt;li&gt; How to calculate premiums &lt;/li&gt;
+    &lt;li&gt; A look into the data &lt;/li&gt;
+    &lt;li&gt; Generalized Linear Model &lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;li&gt; Machine learning techniques in our case study &lt;/li&gt;
+  &lt;ul&gt;
+    &lt;li&gt; \(K\) times \(K-1\) -fold cross-validation scheme &lt;/li&gt;
+  &lt;/ul&gt;
+&lt;/ul&gt;
+]
+.pull-right[
+&lt;ul&gt;
+  &lt;ul&gt;
+    &lt;li&gt; Gradient Boosting Model &lt;/li&gt;
+    &lt;li&gt; Neural Networks &lt;/li&gt;
+    &lt;li&gt; Combined Actuarial Neural Networks) &lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;li&gt; Model interpretation techniques &lt;/li&gt;
+  &lt;ul&gt;
+    &lt;li&gt; Why we need interpretation &lt;/li&gt;
+    &lt;li&gt; Variable importance plots &lt;/li&gt;
+    &lt;li&gt; Partial dependency plots &lt;/li&gt;
+  &lt;/ul&gt;
+&lt;/ul&gt;
+]
+
+---
+
+
+class: middle, clear
+
+### What types of insurances do you know?
+
+---
+
+# Different types of insurances
+
+.pull-left[
+
+### Life insurances
+
+- Traditional life insurance (whole life, endowment)
+- Term insurance
+- Mortgage related term insurance
+- Unit linked
+- Universal life
+- Employee benefit (second pillar pension saving)
+
+]
+
+.pull-right[
+
+### Non-Life Insurances
+
+- Car insurance (.hi-pink(MTPL) insurance)
+- Health and disability insurance (hospitalization)
+- Unemployment insurance
+- Home insurance (Fire, Renter,...)
+- Travel insurance
+- Family and personal liability insurance (.hi-pink['BA'] or .hi-pink['familiale'] in dutch)
+
+]
+
+.center[
+
+&lt;br&gt;
+
+.KULbginline[And many many more]
+
+]
+
+---
+
+# Different types of insurances
+
+### How does insurance work?
+
+You (customer) pays a premium, .hi-pink[if] at a .hi-pink[later time] a claim occurs, the insurer pays a .hi-pink[certain amount] to you.
+
+This is called an .KULbginline[inverse production cycle]
+You pay for the product first, and only later does the insurer knows how much the product actually costs
+
+--
+
+.pull-left[
+
+##### Life insurance
+You ( `\(21\)` years old) take a loan at the bank of &amp;euro; `\(200,000\)` to be paid back over `\(20\)` years, together with a mortgage insurance (dutch: .hi-KUL[schuldsaldo verzekering]). 
+
+If you die before the loan is payed back, the insurer pays the remaining amount.
+
+]
+
+--
+
+.pull-right[
+
+##### Non-Life insurance &lt;br&gt;
+
+You own a car worth &amp;euro; `\(8,000\)` , and you take a .hi-KUL[full omnium] insurance. 
+
+If you cause a car accident, the insurer pays back the damage to your car, other cars and all personal injuries. 
+
+]
+
+---
+
+# Different applications for machine learning
+
+### Many applications for machine learning in insurance
+
+- Fraud detection in claims
+- Mortality rate modelling
+- Lapse rate modelling
+- Frequency - severity modelling
+- Grouping of modelpoints
+- Telematics
+
+Lots of .hi-pink[data] and lots of .hi-pink[things to predict]: the perfect playground for data scientists!
+
+---
+
+# Case study into MTPL Insurance
+
+
+
+
+### What is MTPL Insurance
+
+MTPL stands for .hi-pink[Motor Third Party Liability], generally called .hi-pink[car insurance].
+
+.pull-left[
+In Belgium car insurance is obligated by law! But not every type of car insurance
+
+- Basic coverage (BA): damages caused to other cars and people.
+- Full omnium: covers all damages to own and other cars, plus other people and yourself.
+- In between (mini omnium): basic coverage plus extras: can be own car damages, own body damage, weather related damage, theft of item in car, legal assistence, etc. 
+]
+
+.pull-right[
+&lt;br&gt;
+&lt;br&gt;
+&lt;img src="img_f/car-insurance.jpg" alt="Car Insurance Picture" width="80%"&gt;
+]
+
+
+---
+
+# Case study into MTPL Insurance
+
+### How to calculate premiums
+
+Imagine there is a `\(1\%\)` chance you cause `\(10.000\)` euro of damage each year. So on average the insurer has to pay `\(1\%\times 10.000 = 100\)` euro per year. 
+
+.hi-pink[What would you think is a fair yearly premium? ]
+
+--
+
+&lt;br&gt;
+
+.KULbginline[Technical premium]: you pay for what you get
+
+If the insurer expects to pay you (the insured) `\(100\)` euro per year, they will ask you a premium of `\(100\)` euro per year.
+
+In formula
+
+$$
+\pi = \mathbb{E}\left(\frac{L}{e}\right) \stackrel{\tiny\text{indep.}}{=} \mathbb{E}\left(\frac{N}{e}\right) \times \mathbb{E}\left(\frac{L}{N}\; \middle|\; N&gt;0\right) = \mathbb{E}(F)\times\mathbb{E}(S)
+$$
+
+---
+
+# Case study into MTPL Insurance
+
+### How to calculate premiums
+
+In formula
+
+$$
+\pi = \mathbb{E}\left(\frac{L}{e}\right) \stackrel{\tiny\text{indep.}}{=} \mathbb{E}\left(\frac{N}{e}\right) \times \mathbb{E}\left(\frac{L}{N}\; \middle|\; N&gt;0\right) = \mathbb{E}(F)\times\mathbb{E}(S)
+$$
+
+`\(\pi\)`: the technical premium &lt;br&gt;
+`\(\mathbb{E}()\)`: the expected value &lt;br&gt;
+`\(L\)`: total loss &lt;br&gt;
+`\(e\)`: exposure (how much of the year were you insured?) &lt;br&gt;
+`\(N\)`: number of claims &lt;br&gt;
+`\(L/N\)`: the loss per claim &lt;br&gt;
+
+`\(F\)` is called the .hi-pink[frequency], and `\(S\)` the .hi-pink[severity].
+
+.KULbginline[So in normal words]: the premium is the expected number of claims (frequency) times the expected loss per claim (severity)
+
+---
+
+# Case study into MTPL Insurance
+
+### A look into the data
+
+
+Table: The MTPL dataset
+
+|     id|      expo| nclaims|  average|coverage | ageph|sex    | bm| power| agec|fuel     |use     |fleet | long|   lat|
+|------:|---------:|-------:|--------:|:--------|-----:|:------|--:|-----:|----:|:--------|:-------|:-----|----:|-----:|
+|  33642| 0.0246575|       0|      NaN|TPL      |    42|male   |  1|    33|    6|gasoline |private |1     | 4.58| 51.19|
+|  44818| 0.7123288|       1|   505.31|TPL++    |    48|male   |  0|    74|    1|gasoline |private |0     | 4.68| 50.88|
+|  51654| 0.9753425|       3|   720.84|TPL      |    38|male   |  5|    40|   12|diesel   |private |0     | 5.21| 51.05|
+| 116772| 1.0000000|       1|   517.73|TPL      |    35|female | 10|    46|   12|diesel   |private |0     | 3.78| 50.43|
+| 123889| 1.0000000|       1| 16478.47|TPL      |    24|female |  9|    33|    8|gasoline |private |0     | 3.39| 50.54|
+| 148304| 0.8958904|       1|   514.06|TPL      |    39|male   |  7|   136|   14|gasoline |private |0     | 3.71| 51.06|
+
+---
+
+# Case study into MTPL Insurance
+
+### A look into the data
+&lt;br&gt;
+.pull-left[
+Variable &lt;img width=160/&gt; |  Meaning &lt;img width=500/&gt;
+:------:|:-------------------------:
+id | Identification number of the policy
+expo | Percentage of year covered
+nclaims | Number of claims during the year
+average | Average claim amount
+coverage | Type of coverage
+ageph | Age of the policyholder
+sex | Gender of the policyholder
+bm | Bonus-Malus scale
+]
+.pull-right[
+Variable &lt;img width=160/&gt; |  Meaning &lt;img width=500/&gt;
+:------:|:-------------------------:
+power | Horsepower of the car
+agec | Age of the car
+fuel | Fuel type
+use | Private of proffesional use
+fleet | Company car
+long | Longitude of residence
+lat | Latitude of residence
+]
+
+---
+
+# Case study into MTPL Insurance
+
+### A look into the data
+
+In the original data set there was a variable .hi-pink[POSTALCODE] instead of the latitude and longitude. 
+
+Why did we replace the postal code with the latitude and longitude of the city of residence?
+
+--
+
+.pull-left[
+### Postal code
+
+The postal codes form an interval from `\(1000\)` to `\(9000\)`
+
+But `\(1000 &lt; 4000 &lt; 8000\)`, eventhough `\(1000\)` is in the center of Belgium, `\(4000\)` is in the east and `\(8000\)` in the west
+
+]
+
+.pull-right[
+### Latitude - Longitude
+.center[
+&lt;img src="./img_f/longlat_belgium.jpg" width="80%" height="50%" style="display: block; margin: auto;" /&gt;
+]
+]
+
+---
+
+# Case study into MTPL Insurance
+
+### Generalized Linear Model
+
+Let's try a "more simple" model first!
+
+.KULbginline[Linear Model]&lt;br&gt;
+Response is modelled as a linear combination of the variables
+`$$f(\mathbf{X}) = a_1X_1 + \ldots + a_nX_n$$`
+
+--
+
+.KULbginline[Generalized Linear Model]&lt;br&gt;
+A .hi-pink[transformation] of the response is modelled as a linear combination of the variables
+`$$f(\mathbf{X}) = g^{-1}(a_1X_1 + \ldots + a_nX_n)$$`
+
+GLM's allow the include .hi-pink[non-normal] errors, such as binomial, Poisson, Gamma,...
+
+This transformation (called .hi-pink[link function]) together with the .hi-pink[distribution] of the errors needs to be tuned. 
+
+---
+
+# Machine learning techniques in our case study
+
+The GLM can be replaced with a more 'machine learning' approach. 
+
+Many options exist, for example: GAM, decision trees, ensemble methods (i.e., gradient boosting), Tweedie compound Poisson-gamma models, neural networks, support vector machines.
+
+We will look at both .hi-pink[Gradient Boosing] and .hi-pink[Neural Networks]. What do we need to setup these methods? 
+
+&lt;br&gt;
+&lt;br&gt;
+&lt;br&gt;
+&lt;br&gt;
+
+- Binned GLM:  [Henckaerts et al. (2018)](#references) uses GAMs together with tree-based clustering, to bin continuous variables for use in a GLM
+
+- Gradient Boosting:  [Henckaerts et al. (2020)](#references) uses GBMs for both frequency and severity modelling
+
+- Neural Networks and CANNs: [Holvoet et al. (working paper)] uses Neural networks and CANN models, in both fixed and flexible setup
+
+---
+
+# Machine learning techniques in our case study
+
+### Preperation
+
+What to do with categorical variables? 
+
+Variable .hi-pink[Coverage] contains values TPL, TPL+ and TPL+++. A model cannot calculate with string variables, so we need to make this a numerical value
+
+--
+
+### Option 1
+
+Just make it a number (TPL = 1), (TPL+ = 2) and (TPL+++ = 3)
+
+Problem: these numerical values have an order, which might not be the case for the string values
+
+---
+
+# Machine learning techniques in our case study
+
+### Preperation
+
+What to do with categorical variables? 
+
+Variable .hi-pink[Coverage] contains values TPL, TPL+ and TPL+++. A model cannot calculate with string variables, so we need to make this a numerical value
+
+### Option 2
+
+.hi-pink[One-Hot Encoding]: Make three new variables called TPL, TPL+ and TPL+++, which are 0 (not this cover) or 1 (this cover)
+
+.pull-left[
+
+|    id|      expo| nclaims| average|coverage |
+|-----:|---------:|-------:|-------:|:--------|
+| 51654| 0.9753425|       3|  720.84|TPL      |
+]
+.pull-right[
+
+|    id|      expo| nclaims| average| TPL| TPL+| TPL+++|
+|-----:|---------:|-------:|-------:|---:|----:|------:|
+| 51654| 0.9753425|       3|  720.84|   1|    0|      0|
+]
+&lt;br&gt;
+&lt;br&gt;
+Problem: a single variable with three values is transformed to three variables. Can increase the number of input variables very quickly!
+
+---
+
+# Machine learning techniques in our case study
+
+### Preperation
+
+What to do with categorical variables? 
+
+Variable .hi-pink[Coverage] contains values TPL, TPL+ and TPL+++. A model cannot calculate with string variables, so we need to make this a numerical value
+
+### Option 3
+
+.hi-pink[Embedding]: let the model decide how to encode, and force it a level lower than the one-hot encoding
+
+.center[
+&lt;img src="./img_f/embedding_cropped.png" width="60%" height="40%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+# Machine learning techniques in our case study
+
+### `\(K\)` times `\(K-1\)` -fold cross-validation scheme
+
+Different options for tuning schemes
+
+We need
+- Data to train the model on
+- Data to compare tuning parameter options
+- Data to show the performance of the model, so we can compare different model techniques
+
+--
+
+Standard options
+
+- Training - validation - test strategy
+- Cross-validation
+- Stratified cross-validation
+
+---
+
+# Machine learning techniques in our case study
+
+### `\(K\)` times `\(K-1\)` -fold cross-validation scheme
+
+A problem with this strategy: only the predictions on the test set can be used
+
+But we need predictions on the total portfolio
+
+--
+
+.center[
+&lt;embed src="./img_f/fig_crossval.png" width="54%"&gt;
+]
+
+---
+
+# Machine learning techniques in our case study
+
+### `\(K\)` times `\(K-1\)` -fold cross-validation scheme
+
+Last tuning problem: &lt;br&gt;
+With the cross-validation we can compare tuning parameters with each other
+
+But there are many tuning parameters, and many options for each parameter
+
+.pull-left[
+### Grid search
+
+We compare the performance of each possible combination of parameter values
+]
+
+.pull-right[
+### Sequential tuning
+
+We tune parameter by parameter
+]
+
+&lt;br&gt;
+&lt;br&gt;
+.pull-left[Problem: takes a very long time]
+.pull-right[Problem: it is much faster, but we might miss something]
+
+---
+
+# Machine learning techniques in our case study
+
+### Gradient Boosting Model
+
+
+---
+
+# Machine learning techniques in our case study
+
+### Tuning parameters in this case
+
+##### Gradient Boosting Model
+- dropout rate
+- batch size
+- Number of layers
+- Number of nodes in each layer
+- Activation functions for each layer
+- Optimizer algorithm
+
+---
+
+# Machine learning techniques in our case study
+
+### Neural Networks
+
+Fully-connected feed-forward neural networks
+
+.center[
+&lt;embed src="./img_f/NN_animation.gif" width="60%"&gt;
+]
+
+Each layer outputs a weighted combination of the previous layer, with an activation function `\(\sigma\)`:
+
+`$$\boldsymbol{\text{layer}_i} = \sigma(\mathbf{W}\,\boldsymbol{\text{layer}_{i-1}} + \boldsymbol{\beta})$$`
+
+---
+
+# Machine learning techniques in our case study
+
+### Combined Actuarial Neural Networks
+
+Combined Actuarial Neural Networks (.hi-pink[CANN]), proposed by [Scheldorfer and Wutrich (2019)](#references)
+
+.center[
+&lt;embed src="./img_f/CANN_animation.gif" width="65%"&gt;
+]
+
+An .hi-pink[initial model] is added with a skip connection to the output layer. The neural network part is called the .hi-pink[adjustment model].
+
+---
+
+# Machine learning techniques in our case study
+
+### Combined Actuarial Neural Networks
+
+Combined Actuarial Neural Networks (.hi-pink[CANN]), proposed by [Scheldorfer and Wutrich (2019)](#references)
+
+.center[
+&lt;embed src="./img_f/CANN_animation.gif" width="65%"&gt; ]
+
+.pull-left[
+.KULbginline[Fixed CANN setup]
+]
+.pull-right[
+.KULbginline[Flexible CANN setup]
+]
+
+.font80[
+$$
+\begin{array}{ccc}
+f^{fixed}\left( \boldsymbol{x}_i,\hat{y}_i^{(in)}\right) = \exp\left(\ln\left( \hat{y}_i^{(in)}\right) + \hat{y}_i^{(adj)}\right) &amp; 
+\hspace{230px}
+f^{flexible}\left( \boldsymbol{x}_i,\hat{y}_i^{(in)}\right) = \exp\left( \begin{bmatrix} w_1 &amp; w_2 \end{bmatrix}\cdot\begin{bmatrix}\ln(\hat{y}_i^{(in)}) \\ \hat{y}_i^{(adj)}\end{bmatrix} + \beta\right)
+\end{array} 
+$$
+]
+
+---
+
+# Machine learning techniques in our case study
+
+### Tuning parameters in this case
+
+##### Neural Networks
+- dropout rate
+- batch size
+- Number of layers
+- Number of nodes in each layer
+- Activation functions for each layer
+- Optimizer algorithm
+
+---
+
+# Machine learning techniques in our case study
+
+### Balance property
+
+In a model `\(f(\boldsymbol{x})\)` with perfect balance:
+
+$$ \sum_i f(\boldsymbol{x}_i) = \sum_i y_i. $$
+.KULbginline[Important in insurance:] premiums are defined on portfolio level
+
+### GLM bias regularization
+
+A technique, proposed by [Wutrich (2020)](#references), to restore balance in the model
+
+---
+
+# Model interpretation techniques
+
+fff
+
+---
+
+# Model interpretation techniques
+
+### Why we need interpretation
+
+fff
+
+---
+
+# Model interpretation techniques
+
+### Variable importance plots
+
+fff
+ 
+---
+
+# Model interpretation techniques
+
+### Partial dependency plots
+
+fff
+
+---
+
+# Results
+
+Let's look at some results!
+
+.pull-left[
+###Models
+- GLM
+- Gradient Boosing
+- Neural Networks
+- CANN models
+]
+
+.pull-right[
+### Furthers splits
+- Both frequency and severity setup
+- one-hot encoding vs embedding layers
+- Different input models for CANN models
+- (exposure as offset)
+- (GLM bias regularization)
+]
+
+---
+
+name: outofsample
+
+# Out-of-sample performance
+### Neural network results
+
+.center[
+&lt;img src="./img_f/OOS_NN_freq_vs_sev.png" width="80%" height="50%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+# Out-of-sample performance
+### CANN model results
+
+.center[
+&lt;img src="./img_f/OOS_CANN_freq_vs_sev.png" width="80%" height="50%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+name: brresults
+
+# Out-of-sample performance
+### Effect of bias regularization
+
+.center[
+&lt;img src="./img_f/BReffect_Freq_CANNs.png" width="60%" height="50%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+name: interpretation
+
+# Model interpretational tools
+
+.pull-left[
+### Variable importance plot
+
+- Permutate each variable `\(\ell\)` 
+
+- Calculate the difference in prediction between the unpermutated and the permutated sample data set 
+
+&lt;br&gt;
+
+`$$\text{VIP}_{\ell} = \frac{1}{n}\sum_{i=1}^{n}\left( f_{\text{model}}(\boldsymbol{x}_i) - f_{\text{model}}\left(\boldsymbol{x}_i^{\text{perm},\ell}\right) \right)$$`
+
+]
+
+.pull-right[
+### Partial dependence plot
+
+- Fix the value of variable `\(\ell\)` 
+
+- Look at the average prediction
+
+- Calculate the average predictions over the full range of possible values
+
+`$$\text{PDP}(x_{\ell}) = \frac{1}{n}\sum_{i=1}^{n}f_{\text{model}}(\boldsymbol{x}_{\ell},\boldsymbol{x}^*_i)$$`
+
+]
+
+.footnote[Reference: [Molnar (2019)](#references)]
+
+---
+
+# Model interpretational tools
+
+### Variable importance plot
+
+A permutational approach to asses the importance of each variable in the claim frequency model.
+
+.center[
+&lt;img src="./img_f/VIP_Freq.png" width="80%" height="50%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+# Model interpretational tools
+
+### Partial dependence plot: Policyholder age
+
+Effect of the policyholder age on the predicted claim severity.
+
+.center[
+&lt;img src="./img_f/PDP_Freq_ageph.png" width="80%" height="50%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+# Model interpretational tools
+
+### Partial dependence plot: Postal code
+
+Effect of the postal code on the predicted number of claims.
+
+.center[
+&lt;img src="./img_f/PDP_NC_spatial_comparison.png" width="80%" height="50%" style="display: block; margin: auto;" /&gt;
+]
+
+---
+
+name: references
+# References
+
+.font90[
+Roel Henckaerts, Katrien Antonio, Maxime Clijsters, and Roel Verbelen. A data driven binning strategy
+for the construction of insurance tariff classes. &lt;i&gt;Scandinavian Actuarial Journal&lt;/i&gt;, 2018(8):681–705, 2018.]
+
+.font90[
+Roel Henckaerts, Marie Pier Cote, Katrien Antonio, and Roel Verbelen. Boosting Insights in Insurance
+Tariff Plans with Tree-Based Machine Learning Methods. North American Actuarial Journal, pages 1–31, 2020.]
+
+.font90[
+Christoph Molnar. &lt;i&gt;Interpretable Machine Learning&lt;/i&gt;. christophm.github.io/interpretable-ml-book, 2019.]
+
+.font90[
+Jurg Schelldorfer and Mario V. Wuthrich. Nesting Classical Actuarial Models into Neural Networks.
+&lt;i&gt;SSRN Electronic Journal&lt;/i&gt;, pages 1–27, 2019.]
+
+.font90[
+Mario V. Wuthrich. Bias regularization in neural network models for general insurance pricing. &lt;i&gt;European
+Actuarial Journal&lt;/i&gt;, 10(1):179–202, 2020.]
+
+&lt;br&gt;
+&lt;br&gt;
+&lt;br&gt;
+
+Slides created with the R package &lt;img src="img/xaringan.png" class="title-hex"&gt; [xaringan](https://github.com/yihui/xaringan).&lt;br&gt;
+Presentation template from <svg aria-hidden="true" role="img" viewBox="0 0 496 512" style="height:1em;width:0.97em;vertical-align:-0.125em;margin-left:auto;margin-right:auto;font-size:inherit;fill:#116E8A;overflow:visible;position:relative;"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg> https://github.com/katrienantonio/hands-on-machine-learning-R-module-1
+
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"ratio": "16:9",
+"highlightLanguage": "R",
+"highlightLines": true,
+"countIncrementalSlides": false,
+"highlightSpans": true
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
