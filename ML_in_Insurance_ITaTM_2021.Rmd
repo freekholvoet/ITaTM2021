@@ -142,45 +142,6 @@ In short: .hi-pink[an insurance mathematician]. An actuary does pricing, reservi
 
 ---
 
-name: overview
-# Overview
-
-### What will we see today?
-.pull-left[
-<ul>
-  <li> Different types of insurances </li>
-  <li> Different applications for machine learning </li>
-  <li> Case study into MTPL Insurance </li>
-  <ul>
-    <li> How to calculate premiums </li>
-    <li> A look into the data </li>
-    <li> Generalized Linear Model </li>
-  </ul>
-  <li> Machine learning techniques in our case study </li>
-  <ul>
-    <li> \(K\) times \(K-1\) -fold cross-validation scheme </li>
-  </ul>
-</ul>
-]
-.pull-right[
-<ul>
-  <ul>
-    <li> Gradient Boosting Model </li>
-    <li> Neural Networks </li>
-    <li> Combined Actuarial Neural Networks) </li>
-  </ul>
-  <li> Model interpretation techniques </li>
-  <ul>
-    <li> Why we need interpretation </li>
-    <li> Variable importance plots </li>
-    <li> Partial dependency plots </li>
-  </ul>
-</ul>
-]
-
----
-
-
 class: middle, clear
 
 ### What types of insurances do you know?
@@ -206,7 +167,7 @@ class: middle, clear
 
 ### Non-Life Insurances
 
-- Car insurance (.hi-pink(MTPL) insurance)
+- Car insurance (.hi-pink[MTPL] insurance)
 - Health and disability insurance (hospitalization)
 - Unemployment insurance
 - Home insurance (Fire, Renter,...)
